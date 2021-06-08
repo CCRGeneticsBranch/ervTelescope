@@ -1,0 +1,75 @@
+from os.path import join
+from os import listdir
+import os
+import re
+import yaml
+
+current_dir = os.getcwd() 
+workpath = os.getcwd()#os.path.dirname(current_dir)
+samples = [f for f in os.listdir('fastq') if re.search('_R1.fastq.gz', f)]
+samples = [re.sub("_R1.fastq.gz", "", x) for x in samples]
+#print(samples)
+
+#configfile: "config/config.yaml"
+
+rule all:
+	params:
+		batch='--time=120:00:00',
+	input:		
+		expand(join(workpath,"bams","{name}.bam"),name=samples),
+		expand(join(workpath,"bams","{name}.txt"),name=samples),
+		expand(join(workpath,"telescopeOut","{name}","telescope-telescope_report.tsv"),name=samples),
+		expand(join(workpath,"doneSamples","{name}.txt"),name=samples)
+rule align:
+	output:
+		bam=join(workpath,"bams","{name}.bam"),
+		flag=join(workpath,"bams","{name}.txt")
+	conda: "envs/environment_telescope.yml"
+	params:
+		batch='--cpus-per-task=24 --mem=12g --time=72:00:00',
+		input=join(workpath,"fastq","{name}"),
+		out=join(workpath,"bams","{name}")
+	conda:"envs/environment_telescope.yml"
+	shell: """
+mkdir -p telescopeOut bams
+#module load bowtie/2-2.4.4
+#module load samtools/1.9
+bowtie2 --very-sensitive-local -k 100 -p 24 -x /data/khanlab/ref/telescopeERV/hg38UCSCbt2index/genome -1 {params.input}_R1.fastq.gz -2 {params.input}_R2.fastq.gz  > {params.out}.sam
+samtools view -S -b {params.out}.sam > {params.out}.bam
+touch {output.flag} 
+	"""
+
+
+rule telescope:
+	input:
+		join(workpath,"bams","{name}.bam")
+	output:
+		join(workpath,"telescopeOut","{name}","telescope-telescope_report.tsv")
+	conda: "envs/environment_telescope.yml" 
+	params:
+		batch='--cpus-per-task=4 --mem=128g --time=80:00:00',
+		outDir=join(workpath,"telescopeOut","{name}"),
+		sam='join(workpath,"bams","{name}.sam")'
+	conda:"envs/environment_telescope.yml"
+	shell: """
+rm {params.sam}
+mkdir -p {params.outDir}
+telescope assign {input} /data/khanlab/ref/telescopeERV/hg38L1anndHERV.gtf  --outdir {params.outDir} 
+	"""
+
+rule clean:
+	input:
+		join(workpath,"telescopeOut","{name}","telescope-telescope_report.tsv")
+	output:
+		join(workpath,"doneSamples","{name}.txt")
+	params:
+		bam='join(workpath,"bams","{name}.bam")',
+		flag='join(workpath,"bams","{name}.flag")'
+	shell: """
+rm bam
+rm flag
+mkdir -p doneSamples
+touch {output}
+	"""
+
+
