@@ -18,7 +18,7 @@ dependencies:
   - htslib=1.9=h244ad75_9
   - intervaltree=3.0.2=py_0
   - krb5=1.16.4=h2fd8d38_0
-  - ld_impl_linux-64=2.34=h53a641e_0
+  - ld_impl_linux-64=2.35.1=hea4e1c9_2
   - libblas=3.8.0=16_openblas
   - libcblas=3.8.0=16_openblas
   - libcurl=7.68.0=hda55be3_0
@@ -53,6 +53,4 @@ dependencies:
   - xz=5.2.4=h516909a_1002
   - yaml=0.2.2=h516909a_1
   - zlib=1.2.11=h516909a_1006
-  - pip:
-    - telescope-ngs==1.0.3
 prefix: /data/abdelmaksoudaa/conda/envs/telescope_env

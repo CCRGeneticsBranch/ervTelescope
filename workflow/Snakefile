@@ -10,7 +10,7 @@ samples = [f for f in os.listdir('fastq') if re.search('_R1.fastq.gz', f)]
 samples = [re.sub("_R1.fastq.gz", "", x) for x in samples]
 #print(samples)
 
-#configfile: "config/config.yaml"
+configfile: "config/config.yaml"
 
 rule all:
 	params:
@@ -24,16 +24,16 @@ rule align:
 	output:
 		bam=join(workpath,"bams","{name}.bam"),
 		flag=join(workpath,"bams","{name}.txt")
-	conda: "envs/environment_telescope.yml"
+	#conda: "workflow/envs/environment_telescope.yml"
 	params:
 		batch='--cpus-per-task=24 --mem=12g --time=72:00:00',
 		input=join(workpath,"fastq","{name}"),
-		out=join(workpath,"bams","{name}")
-	conda:"envs/environment_telescope.yml"
+		out=join(workpath,"bams","{name}"),
+		ref=config['hg38_path']
+	conda:
+		"envs/environment_telescope.yml"
 	shell: """
 mkdir -p telescopeOut bams
-#module load bowtie/2-2.4.4
-#module load samtools/1.9
 bowtie2 --very-sensitive-local -k 100 -p 24 -x /data/khanlab/ref/telescopeERV/hg38UCSCbt2index/genome -1 {params.input}_R1.fastq.gz -2 {params.input}_R2.fastq.gz  > {params.out}.sam
 samtools view -S -b {params.out}.sam > {params.out}.bam
 touch {output.flag} 
