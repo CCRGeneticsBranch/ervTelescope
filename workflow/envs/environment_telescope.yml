@@ -40,7 +40,7 @@ dependencies:
   - pysam=0.15.2=py36hea69257_4
   - python=3.6.10=h9d8adfe_1009_cpython
   - python_abi=3.6=1_cp36m
-- pyyaml=5.3.1=py36h8c4c3a4_0
+  - pyyaml=5.3.1=py36h8c4c3a4_0
   - readline=8.0=hf8c457e_0
   - samtools=1.9=h10a08f8_12
   - scipy=1.2.1=py36h09a28d5_1
