@@ -4,6 +4,21 @@
 		"mem": "48g",
 		"partition": "norm", 
 		"threads": "2",
-		"time": "2-00:00:00"
+		"time": "2-00:00:00",
+        "name"      : "{rule}.{wildcards}",
+        "output"    : "logs/${{SLURM_JOBID}}.%j.{rule}.{wildcards}.out",
+        "error"     : "logs/${{SLURM_JOBID}}.%j.{rule}.{wildcards}.err"
+	},
+	"align": {
+		"mem": "120g",
+		"threads": "56",
+		"time": "12:00:00"
+	},
+	"telescope": {
+		"mem": "120g",
+		"time": "1-00:00:00"
+	},
+	"clean": {
+		"time": "01:00:00"
 	}
 }
