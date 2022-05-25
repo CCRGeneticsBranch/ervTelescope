@@ -1,5 +1,6 @@
 ## you probably need to change or comment/uncomment some of these
 
-
-conda:
-   "envs/environment_telescope.yml"
+workpath: WORKDIR
+fastqpath: FASTQPATH
+index: "/data/khanlab/ref/telescopeERV/hg38UCSCbt2index/genome"
+gtf: "/data/khanlab/ref/telescopeERV/hg38L1anndHERV.gtf"
