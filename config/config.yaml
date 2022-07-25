@@ -1,7 +1,7 @@
 ## you probably need to change or comment/uncomment some of these
 
-#WORKDIR: "/data/khanlab/projects/singularity_erv"
-workpath: WORKDIR
+WORKDIR: "/data/khanlab/projects/singularity_erv"
+#workpath: WORKDIR
 fastqpath: FASTQPATH
 hg38_path: "/data/khanlab/ref/telescopeERV/hg38UCSCbt2index/genome"
 gtf: "/data/khanlab/ref/telescopeERV/hg38L1anndHERV.gtf"

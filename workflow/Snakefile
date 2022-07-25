@@ -7,11 +7,10 @@ import yaml
 current_dir = os.getcwd()
 print(current_dir) 
 
-configfile: "config/config.yaml"
 
-workpath=config['workpath']
+workpath = config['workpath']
 fastqpath = config['fastqpath']
-os.chdir(workpath)
+workpath = os.getcwd()#os.path.dirsamplename(current_dir)
 samples = [f for f in os.listdir(fastqpath) if re.search('_R1.fastq.gz', f)]
 samples = [re.sub("_R1.fastq.gz", "", x) for x in samples]
 print(samples)
@@ -60,8 +59,10 @@ rule telescope:
 	params:
 		batch='--cpus-per-task=4 --mem=128g --time=80:00:00',
 		outDir=join(workpath,"telescopeOut","{name}"),
-		sam='join(workpath,"bams","{name}.sam")'
-		gtf = config['gtf']
+		sam='join(workpath,"bams","{name}.sam")',
+		gtf = config['gtf'],
+	envmodules:
+		"telescope/6cd5525" 
 	container: "docker://nciccbr/ccbr_telescope:latest"
 	shell: """
 if [[ ! -d {params.outDir} ]];then
