@@ -4,13 +4,23 @@ import os
 import re
 import yaml
 
-current_dir = os.getcwd() 
-workpath = os.getcwd()#os.path.dirname(current_dir)
-samples = [f for f in os.listdir('fastq') if re.search('_R1.fastq.gz', f)]
-samples = [re.sub("_R1.fastq.gz", "", x) for x in samples]
-#print(samples)
+current_dir = os.getcwd()
+print(current_dir) 
 
 configfile: "config/config.yaml"
+
+workpath=config['workpath']
+fastqpath = config['fastqpath']
+os.chdir(workpath)
+samples = [f for f in os.listdir(fastqpath) if re.search('_R1.fastq.gz', f)]
+samples = [re.sub("_R1.fastq.gz", "", x) for x in samples]
+print(samples)
+
+if len(samples) == 0:
+        exit("There are NO samples to run!")
+for s in samples:
+        print(s)
+
 
 rule all:
 	params:
@@ -27,11 +37,12 @@ rule align:
 	#conda: "workflow/envs/environment_telescope.yml"
 	params:
 		batch='--cpus-per-task=24 --mem=12g --time=72:00:00',
-		input=join(workpath,"fastq","{name}"),
+		input= join(fastqpath,"{name}"),
 		out=join(workpath,"bams","{name}"),
 		ref=config['hg38_path']
-	conda:
-		"envs/environment_telescope.yml"
+	envmodules: 
+		"bowtie/2-2.4.5",
+		"samtools/0.1.19"
 	shell: """
 mkdir -p telescopeOut bams
 bowtie2 --very-sensitive-local -k 100 -p 24 -x /data/khanlab/ref/telescopeERV/hg38UCSCbt2index/genome -1 {params.input}_R1.fastq.gz -2 {params.input}_R2.fastq.gz  > {params.out}.sam
@@ -50,11 +61,13 @@ rule telescope:
 		batch='--cpus-per-task=4 --mem=128g --time=80:00:00',
 		outDir=join(workpath,"telescopeOut","{name}"),
 		sam='join(workpath,"bams","{name}.sam")'
-	conda:"envs/environment_telescope.yml"
+		gtf = config['gtf']
+	container: "docker://nciccbr/ccbr_telescope:latest"
 	shell: """
-rm {params.sam}
+if [[ ! -d {params.outDir} ]];then
 mkdir -p {params.outDir}
-telescope assign {input} /data/khanlab/ref/telescopeERV/hg38L1anndHERV.gtf  --outdir {params.outDir} 
+fi
+telescope assign {input} {params.gtf}  --outdir {params.outDir} 
 	"""
 
 rule clean:
@@ -66,8 +79,8 @@ rule clean:
 		bam='join(workpath,"bams","{name}.bam")',
 		flag='join(workpath,"bams","{name}.flag")'
 	shell: """
-rm bam
-rm flag
+rm {params.bam}
+rm {params.flag}
 mkdir -p doneSamples
 touch {output}
 	"""
