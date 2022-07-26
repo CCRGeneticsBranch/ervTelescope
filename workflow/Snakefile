@@ -77,8 +77,8 @@ rule clean:
 	output:
 		join(workpath,"doneSamples","{name}.txt")
 	params:
-		bam='join(workpath,"bams","{name}.bam")',
-		flag='join(workpath,"bams","{name}.flag")'
+		bam=join(workpath,"bams","{name}.bam"),
+		flag=join(workpath,"bams","{name}.sam")
 	shell: """
 rm {params.bam}
 rm {params.flag}

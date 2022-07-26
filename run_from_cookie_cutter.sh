@@ -20,8 +20,9 @@ SCRIPTBASENAME=$(readlink -f $(basename $0))
 
 # set extra singularity bindings
 EXTRA_SINGULARITY_BINDS="-B /data/khanlab/projects/testing_ERV_pipeline/singularity"
-SINGULARITY_CACHEDIR="/data/gangalapudiv2/"
 
+export SINGULARITY_CACHEDIR="/data/gangalapudiv2/singularity"
+#mkdir -p $SINGULARITY_CACHEDIR
 
 function get_git_commitid_tag() {
 # This function gets the latest git commit id and tag
@@ -130,7 +131,7 @@ function runcheck(){
   check_essential_files
   module load $PYTHON_VERSION
   module load $SNAKEMAKE_VERSION
-  SINGULARITY_BINDS="$EXTRA_SINGULARITY_BINDS -B ${PIPELINE_HOME}:${PIPELINE_HOME} -B ${WORKDIR}:${WORKDIR}"
+#  SINGULARITY_BINDS="$EXTRA_SINGULARITY_BINDS -B ${PIPELINE_HOME}:${PIPELINE_HOME} -B ${WORKDIR}:${WORKDIR} -B $SINGULARITY_CACHEDIR"
 
 }
 
@@ -148,20 +149,38 @@ function unlock() {
   run "--unlock"  
 }
 
+
+#function set_singularity_binds(){
+## this functions tries find what folders to bind
+## biowulf specific
+#  echo "$PIPELINE_HOME" > ${WORKDIR}/tmp1
+#  echo "$WORKDIR" >> ${WORKDIR}/tmp1
+#  grep -o '\/.*' <(cat ${WORKDIR}/config.yaml)|dos2unix|tr '\t' '\n'|grep -v ' \|\/\/'|sort|uniq >> ${WORKDIR}/tmp1
+#  grep gpfs ${WORKDIR}/tmp1|awk -F'/' -v OFS='/' '{print $1,$2,$3,$4,$5}'| grep "[a-zA-Z0-9]" |sort|uniq > ${WORKDIR}/tmp2
+#  grep -v gpfs ${WORKDIR}/tmp1|awk -F'/' -v OFS='/' '{print $1,$2,$3}'| grep "[a-zA-Z0-9]"|sort|uniq > ${WORKDIR}/tmp3
+#  while read a;do readlink -f $a;done < ${WORKDIR}/tmp3 | grep "[a-zA-Z0-9]"> ${WORKDIR}/tmp4
+#  binds=$(cat ${WORKDIR}/tmp2 ${WORKDIR}/tmp3 ${WORKDIR}/tmp4|sort|uniq |tr '\n' ',')
+#  rm -f ${WORKDIR}/tmp?
+#  binds=$(echo $binds|awk '{print substr($1,1,length($1)-1)}')
+#  SINGULARITY_BINDS="-B $EXTRA_SINGULARITY_BINDS,$binds"
+#}
+
 function set_singularity_binds(){
-# this functions tries find what folders to bind
-# biowulf specific
-  echo "$PIPELINE_HOME" > ${WORKDIR}/tmp1
-  echo "$WORKDIR" >> ${WORKDIR}/tmp1
-  grep -o '\/.*' <(cat ${WORKDIR}/config.yaml)|dos2unix|tr '\t' '\n'|grep -v ' \|\/\/'|sort|uniq >> ${WORKDIR}/tmp1
-  grep gpfs ${WORKDIR}/tmp1|awk -F'/' -v OFS='/' '{print $1,$2,$3,$4,$5}'| grep "[a-zA-Z0-9]" |sort|uniq > ${WORKDIR}/tmp2
-  grep -v gpfs ${WORKDIR}/tmp1|awk -F'/' -v OFS='/' '{print $1,$2,$3}'| grep "[a-zA-Z0-9]"|sort|uniq > ${WORKDIR}/tmp3
-  while read a;do readlink -f $a;done < ${WORKDIR}/tmp3 | grep "[a-zA-Z0-9]"> ${WORKDIR}/tmp4
-  binds=$(cat ${WORKDIR}/tmp2 ${WORKDIR}/tmp3 ${WORKDIR}/tmp4|sort|uniq |tr '\n' ',')
-  rm -f ${WORKDIR}/tmp?
-  binds=$(echo $binds|awk '{print substr($1,1,length($1)-1)}')
-  SINGULARITY_BINDS="-B $EXTRA_SINGULARITY_BINDS,$binds"
+    local gpfs_links link gpfs_dirs add_comma
+
+    gpfs_links="$(ls -d /gs*)"
+    # check to see if any gs* links are broken
+    for link in $gpfs_links; do
+        if [ -e "${link}" ]; then
+            gpfs_dirs+="${add_comma:-}${link}"
+            # only prepend the comma _after_ the first iteration
+            add_comma=,
+        fi
+    done
+    SINGULARITY_BINDS="-B ${gpfs_dirs:-},/vf,/spin1,/data,/fdb,/gpfs"
 }
+
+
 
 function printbinds(){
   set_singularity_binds
